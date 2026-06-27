@@ -34,49 +34,134 @@ function toggleTheme() {
 // ── Content data ──────────────────────────────────────────────────
 const content = {
     'diff-whisperer': {
-        type: 'project', meta: 'MANIFEST_FILE.001',
-        cat: 'Portfolio // SYSTEMS ENGINEERING · MCP', title: 'Diff-Whisperer',
+        type: 'project', meta: 'PROJECT_BREAKDOWN',
+        cat: '', title: 'Diff-Whisperer',
         s1Label: '01 / THE_ARCHITECTURE',
-        s1Body: 'Diff-Whisperer reads logs from Docker, Kubernetes, and local files (Layers 1-3), normalizes and compacts them into event signatures (synthesizer), and diffs two log windows against each other to surface new failure modes and frequency regressions (Layer 4) — the piece no existing log-reading MCP server does.',
-        code: `# Core normalization patterns
-_NORM_PATTERNS = [
-    (re.compile(r'\\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\b'), '<UUID>'),
-    (re.compile(r'\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b'), '<IP>'),
-    (re.compile(r'\\b\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?\\b'), '<TS>'),
-    (re.compile(r'0x[0-9a-fA-F]+'), '<HEX>'),
-    (re.compile(r'(["\\'])(?:(?=(\\\\?))\\2.)*?\\1'), '<STR>'),
-    (re.compile(r'/[\\w\\-./]*\\b(req|session|job)[-_][\\w]+\\b'), '<PATH_ID>'),
-    (re.compile(r'\\b\\d+\\b'), '<N>'),  # must run last
-]`,
+        s1Body: 'Diff-Whisperer is an MCP server built to give AI coding agents (like Claude Code or Cursor) direct, pluggable access to production-like logs when things go wrong. It reads raw logs from Docker, Kubernetes, and local files (Layers 1-3), passing them through a Synthesizer that collapses IPs, UUIDs, and hashes into normalized event signatures. The core value lies in Layer 4 (The Diff Engine): whether debugging an active outage or conducting automated regression tests after pushing a fix, an agent can instantly diff \'before\' and \'after\' log windows to mathematically surface new failure modes or frequency anomalies.',
+        mermaid: `flowchart TB
+    classDef core fill:#ff5c00,stroke:#fff,stroke-width:2px,color:#fff;
+    classDef target fill:#2A2A2A,stroke:#ff5c00,stroke-width:1px,color:#fff;
+    classDef external fill:#1A1A1A,stroke:#555,stroke-width:1px,color:#ccc,stroke-dasharray: 5 5;
+
+    Client([AI Coding Agent via MCP]) --> |JSON-RPC| Server(Diff-Whisperer Server)
+
+    subgraph Strict Execution Boundary
+        direction TB
+        Server --> |resolve_within_workspace| L3[Layer 3: Local Files]
+        Server --> |create_subprocess_exec| L1[Layer 1: docker logs]
+        Server --> |create_subprocess_exec| L2[Layer 2: kubectl logs]
+        
+        L1 --> Synth
+        L2 --> Synth
+        L3 --> Synth
+        
+        Synth[Synthesizer / Normalizer] --> |Event Signatures| DiffEngine[Layer 4: Diff Engine]
+        DiffEngine --> |Frequency Regressions| Server
+    end
+
+    L1 -.-> DockerDaemon(Docker Daemon)
+    L2 -.-> K8sCluster(Kubernetes Cluster)
+    L3 -.-> Disk[(Local File System)]
+
+    class Synth,DiffEngine core;
+    class L1,L2,L3 target;
+    class DockerDaemon,K8sCluster,Disk external;`,
+        code: `def diff_signatures(before: dict, after: dict, before_s: float, after_s: float):
+    """
+    Compute new, vanished, and frequency-shifted signatures between two windows.
+    
+    When an AI agent compares a 1-hour pre-deployment window to a 10-minute post-deployment 
+    window, relying on raw error counts is useless. The engine calculates statistically sound 
+    per-minute rates for every normalized signature, clamping zero-division edge cases, and 
+    completely eliminating duration mismatches. This transforms a basic log reader into a 
+    deterministic, production-grade evaluation tool.
+    """
+    new = [s for k, s in after.items() if k not in before]
+    vanished = [s for k, s in before.items() if k not in after]
+    shifted = []
+
+    for k in before.keys() & after.keys():
+        b, a = before[k], after[k]
+        if max(b.count, a.count) < SHIFT_MIN_COUNT:
+            continue # Too few events to distinguish a rate change from Poisson noise
+            
+        b_rate = b.count / (before_s / 60)   # events per minute
+        a_rate = a.count / (after_s / 60)
+        
+        ratio = a_rate / max(b_rate, 1e-9)
+        if ratio >= SHIFT_RATIO_THRESHOLD or ratio <= 1 / SHIFT_RATIO_THRESHOLD:
+            shifted.append((b, a, ratio))
+
+    return DiffResult(new=new, vanished=vanished, shifted=shifted)`,
         s2Label: '02 / THE_DESIGN_DECISIONS',
-        s2Body: 'Three non-negotiable design rules: No mutating tools ever (only GET-equivalent operations). Every blocking syscall goes through run_in_executor. Every subprocess call uses create_subprocess_exec to neutralize shell injection. The diff engine rate-normalizes events to prevent window duration mismatches from biasing ratio results, using a heuristic 3.0x shift threshold to flag regressions.',
+        s2Body: 'The architecture is engineered around strict boundaries and zero-trust execution. The server enforces a read-only security posture with absolutely no mutating operations allowed. All underlying system calls are strictly bounded using run_in_executor to prevent blocking the async event loop, while subprocess invocations are built exclusively with create_subprocess_exec to neutralize shell injection. To prevent agents from drowning in log spam or false positives due to time-window duration mismatches, the Diff Engine mathematically normalizes event rates, and truncates results to a strict maximum per bucket.',
         s3Label: null, s3Body: null,
-        tags: ['MCP', 'Docker', 'Kubernetes', 'AsyncIO', 'Python'],
-        year: '2026', extra: 'STATUS: ACTIVE'
+        tags: ['MCP', 'Docker', 'K8s', 'AsyncIO', 'Python'],
+        year: '2026', extra: 'STATUS: WORK IN PROGRESS'
     },
     'agentvault': {
-        type: 'project', meta: 'MANIFEST_FILE.002',
-        cat: 'Portfolio // AI ENGINEERING · MULTI-AGENT', title: 'AgentVault',
+        type: 'project', meta: 'PROJECT_BREAKDOWN',
+        cat: '', title: 'AgentVault',
         s1Label: '01 / THE_ARCHITECTURE',
-        s1Body: 'A lightweight, stateless-by-design Python library for creating LLM-powered agents. Session state is externalized to a pluggable StateStore (like Redis), eliminating shared-actor race conditions. Built to orchestrate multi-agent setups with concurrent tool execution, structural output guarantees, and strict verification loops.',
-        code: `# Stateless agent with pluggable backends
-agent = Agent(
+        s1Body: 'AgentVault provides the scaffolding that turns an LLM, tools, and a state store into a robust agent ecosystem. The architecture deliberately avoids graph DSLs in favor of a straightforward, async for loop. It features an automated @tool introspection engine for OpenAPI schemas and a fully dynamic ToolRegistry that handles both local Python functions and remote MCP servers simultaneously. Furthermore, the Orchestrator module enables hierarchical multi-agent setups via an agent-as-tool pattern, while the voice module exposes a stream_tokens generator that chunks LLM output into phonetically complete sentences for real-time TTS rendering.',
+        mermaid: `flowchart TB
+    %% Styling
+    classDef core fill:#ff5c00,stroke:#fff,stroke-width:2px,color:#fff;
+    classDef storage fill:#2A2A2A,stroke:#ff5c00,stroke-width:1px,color:#fff;
+    classDef remote fill:#1A1A1A,stroke:#555,stroke-width:1px,color:#ccc,stroke-dasharray: 5 5;
+    
+    Client([Client Request]) --> |HTTP / WS| RayServe(Ray Serve Ingress)
+    
+    subgraph Ray Cluster [Ray Cluster / Worker Node]
+        direction TB
+        RayServe --> AgentActor[AgentDeployment Actor]
+        AgentActor --> |Bypasses actor serialization| Loop[[_loop.py Free Function]]
+        
+        subgraph AgentVault Harness
+            direction TB
+            Loop --> |1. Reason| LLM[LiteLLM Wrapper]
+            Loop --> |2. Checkpoint| State[(RedisStore)]
+            Loop --> |3. Act| Registry[ToolRegistry Dispatcher]
+            Loop --> |4. Observe| Verifier{Verification Hooks}
+        end
+        
+        subgraph Concurrent Tool Dispatch
+            Registry --> |asyncio.gather| Local[@tool Introspection]
+            Registry --> |HTTP| MCP[MCPToolProvider]
+            Registry --> |Agent-as-tool| Orchestrator[Sub-Agent Orchestrator]
+        end
+    end
+    
+    LLM --> |API| Models(OpenAI / Anthropic)
+    State <--> |Persist / Dead-letter| RedisDB[(External Redis)]
+    MCP -.-> |JSON-RPC| MCPServer(Remote MCP Server)
+    
+    class Loop core;
+    class State,RedisDB storage;
+    class Models,MCPServer remote;`,
+        code: `from agentvault import AgentDeployment, RedisStore
+from agentvault.tools import MCPToolProvider
+from ray import serve
+
+# Distributed agent deployed as a Ray Actor
+class AnalystAgent(AgentDeployment):
+    pass
+
+# Binds the agent to a hot Ray Serve deployment with external state & tools
+app = AnalystAgent.bind(
     name="analyst",
     model="gpt-4o",
-    system_prompt="You are a data analyst.",
-    tools=[query_db],
-    state_store=RedisStore(url="redis://localhost:6379", ttl=3600),
-    executor=RayExecutor(num_replicas=4),
-    verifier=no_pii
+    system_prompt="You are a senior data analyst.",
+    state_store=RedisStore(url="redis://cluster:6379", ttl=3600),
+    tool_providers=[MCPToolProvider("http://mcp-server:8000")],
 )
 
-# Async execution fans out concurrent tool calls
-result = await agent.run("Analyze Q3 sales and fetch inventory")`,
+serve.run(app)`,
         s2Label: '02 / THE_DESIGN_DECISIONS',
-        s2Body: 'The core design philosophy is statelessness. By moving session history and context out of the agent actor and into Redis, agents can scale horizontally without sticky sessions. Tool calls naturally fan out concurrently via asyncio.gather unless sequential dependency is mandated by the LLM response grouping. Verification callbacks intercept responses before they reach the user, explicitly breaking the loop if PII or hallucinated data is detected.',
+        s2Body: 'Every design decision flows from the need for horizontal scaling and reliability. By externalizing session history to Redis, agents scale across Ray clusters without sticky sessions. To prevent Ray serialization overhead from bottlenecking the cluster, the core execution loop is implemented as a free function (_loop.py), ensuring massive Agent instances and configuration closures are not serialized across the wire. Configuration is strictly immutable via frozen Pydantic models. Finally, the system guarantees observability through zero-cost OpenTelemetry span integration and machine-parseable JSON logs across every execution boundary.',
         s3Label: null, s3Body: null,
-        tags: ['Agents', 'Ray', 'Redis', 'Python', 'OpenTelemetry'],
-        year: '2026', extra: 'STATUS: ACTIVE'
+        tags: ['Ray Serve', 'Redis', 'MCP', 'OpenTelemetry', 'AsyncIO', 'LiteLLM', 'Pydantic'],
+        year: '2026', extra: 'STATUS: WORK IN PROGRESS'
     },
     'mt': {
         type: 'project', meta: 'MANIFEST_FILE.004',
@@ -104,31 +189,114 @@ def translate_with_context(text: str, src: str, tgt: str) -> str:
         year: '2025', extra: 'STATUS: UNDER REVIEW'
     },
     'absa': {
-        type: 'project', meta: 'MANIFEST_FILE.005',
-        cat: 'Research // SENTIMENT ANALYSIS · NLP', title: 'Aspect-Based Sentiment Analysis',
-        s1Label: '01 / THE_PROBLEM',
-        s1Body: 'Sentence-level sentiment classification is too coarse for most real applications. A product review that says "the camera is excellent but the battery life is terrible" has positive and negative sentiment in the same sentence — sentence-level models flatten this to a single score, losing the signal that actually drives product decisions. ABSA requires identifying which aspects are being discussed and what sentiment is expressed toward each aspect independently. The challenge: the sentiment of a word depends heavily on which aspect it\'s associated with, and that association often spans multiple tokens in non-obvious ways.',
-        code: `# Attention-based Bi-LSTM for aspect-level sentiment
-class ABSAModel(nn.Module):
-    def __init__(self, vocab_size, embed_dim, hidden_dim):
-        super().__init__()
-        self.embed = nn.Embedding(vocab_size, embed_dim)
-        self.bilstm = nn.LSTM(embed_dim, hidden_dim,
-                              bidirectional=True, batch_first=True)
-        self.attention = nn.Linear(hidden_dim * 2, 1)
-        self.classifier = nn.Linear(hidden_dim * 2, 3)
+        type: 'project', meta: 'PROJECT_BREAKDOWN',
+        cat: '', title: 'Aspect-Based Sentiment Analysis',
+        s1Label: '01 / THE_ARCHITECTURE',
+        s1Body: 'The core of this project is a custom aspect-aware Attention Bi-LSTM built in PyTorch. Unlike standard sentiment classifiers that judge an entire sentence, this model extracts specific product aspects (e.g., \'battery\', \'camera\') and dynamically scores the sentiment of each one. A secondary deployed pipeline uses Stanza for dependency parsing and NLTK VADER for rule-based aspect extraction, featuring an interactive frontend powered by Streamlit.',
+        mermaid: `flowchart LR
+    classDef core fill:#ff5c00,stroke:#fff,stroke-width:2px,color:#fff;
+    classDef target fill:#2A2A2A,stroke:#ff5c00,stroke-width:1px,color:#fff;
+    
+    Input(Input Sentence + Aspect) --> Tokenizer(Tokenizer & Embeddings)
+    Tokenizer --> Concat[Concat: Word + Aspect Embeddings]
+    Concat --> BiLSTM[Bidirectional LSTM]
+    
+    BiLSTM -->|Forward & Backward States| Attention[Attention Mechanism]
+    
+    subgraph Attention Masking
+        Attention --> Mask[Context Window Mask]
+        Mask --> |-1e9 Penalty| Softmax(Softmax)
+    end
+    
+    Softmax --> ContextVector(Context Vector)
+    ContextVector --> Dropout(Dropout)
+    Dropout --> Dense[Dense Classifier]
+    Dense --> Output([Sentiment: Pos/Neg/Neu])
 
-    def forward(self, x, aspect_mask):
-        h, _ = self.bilstm(self.embed(x))
-        scores = torch.softmax(self.attention(h).squeeze(-1), dim=1)
-        scores = scores * aspect_mask
-        context = (scores.unsqueeze(-1) * h).sum(dim=1)
-        return self.classifier(context)`,
-        s2Label: '02 / THE_ARCHITECTURE',
-        s2Body: 'The bidirectional LSTM processes text in both forward and backward directions simultaneously — critical for aspect-dependent sentiment where polarity depends on what follows the aspect term, not just what precedes it. The attention mechanism learns to concentrate the context representation around the specific aspect token being evaluated, rather than treating the full sentence uniformly. This gives the model a form of interpretability as a side effect: you can inspect the attention weights to see which tokens the model weighted for a given aspect prediction.',
+    class BiLSTM,Attention,Mask core;
+    class Tokenizer,Dense target;`,
+        code: `def forward(self, token_embeddings, aspect_features, context_mask=None):
+    # 1. Aspect-Aware Embeddings
+    # We concatenate an aspect indicator vector to the token embeddings 
+    # so the LSTM is inherently "aspect-aware" from the very first step.
+    combined_input = torch.cat([token_embeddings, aspect_features], dim=-1)
+    
+    # 2. Sequence Processing (Bi-LSTM)
+    # Forward pass reads before the word, backward pass reads after it.
+    encoded_states, _ = self.bilstm(combined_input)
+    
+    # 3. Attention Scoring with Hard Masking
+    # We dynamically scan the context window, applying a -1e9 penalty 
+    # to out-of-bounds words before softmax to physically prevent hallucinations.
+    attention_scores = self.attention(encoded_states)
+    if context_mask is not None:
+        attention_scores = attention_scores.masked_fill(context_mask == 0, -1e9)
+        
+    attention_weights = F.softmax(attention_scores, dim=1)
+    
+    # 4. Context Vector & Classification
+    context_vector = torch.bmm(attention_weights.transpose(1, 2), encoded_states)
+    logits = self.classifier(self.dropout(context_vector.squeeze(1)))
+    
+    return logits`,
+        s2Label: '02 / THE_DESIGN_DECISIONS',
+        s2Body: 'To solve the problem of overlapping sentiments (e.g., \'The camera is bad, but the battery is amazing\'), the architecture enforces two strict rules. First, the Bi-LSTM processes text bidirectionally, ensuring the representation of a word contains the full context of negations that precede it. Second, the attention mechanism uses a strict context window mask—words outside the target aspect\'s radius are mathematically penalized with a -1e9 score before the softmax layer, physically preventing the model from drawing sentiment from irrelevant clauses.',
         s3Label: null, s3Body: null,
-        tags: ['Bi-LSTM', 'Attention', 'PyTorch', 'NLP'],
-        year: '2024', extra: 'STATUS: COMPLETE'
+        tags: ['PyTorch', 'Bi-LSTM', 'Attention', 'NLP', 'Streamlit'],
+        year: '2024', extra: '<a href="https://github.com/loyalkid07/Aspect-Based-Sentiment-Analysis" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">VIEW REPOSITORY ↗</a>',
+        smallDiagram: true
+    },
+    'mt': {
+        type: 'project', meta: 'PROJECT_BREAKDOWN',
+        cat: '', title: 'Culturally Aware MT Pipeline',
+        s1Label: '01 / THE_ARCHITECTURE',
+        s1Body: 'Polyglot Nexus is a sophisticated real-time multilingual translation pipeline tailored for India\'s diverse linguistic landscape. Built on top of the IndicTrans2 foundation model, the system introduces a specialized context extraction layer utilizing Named Entity Recognition (NER) and Sentiment Analysis. This ensures that translations are not just grammatically correct, but culturally adapted and contextually relevant across multiple language pairs.',
+        mermaid: `flowchart LR
+    classDef core fill:#ff5c00,stroke:#fff,stroke-width:2px,color:#fff;
+    classDef target fill:#2A2A2A,stroke:#ff5c00,stroke-width:1px,color:#fff;
+    
+    Input(Source Text) --> Context[Context Extraction]
+    Context --> NER(NER Engine)
+    Context --> Sentiment(Sentiment Analysis)
+    
+    NER --> Adapt[Cultural Adaptation]
+    Sentiment --> Adapt
+    
+    Adapt --> IndicTrans[IndicTrans2 Core]
+    IndicTrans --> LoRA[LoRA Edge Optimized]
+    LoRA --> Output(Translated Text)
+
+    class IndicTrans,LoRA,Adapt core;
+    class NER,Sentiment target;`,
+        code: `# LoRA configuration for edge-optimized inference
+from peft import LoraConfig, get_peft_model
+from transformers import AutoModelForSeq2SeqLM
+
+# Load base IndicTrans2 model
+base_model = AutoModelForSeq2SeqLM.from_pretrained("ai4bharat/indictrans2-en-indic")
+
+# Apply Low-Rank Adaptation (LoRA) for efficient edge deployment
+# This targets the attention projection layers to dramatically 
+# reduce the trainable parameter count.
+lora_config = LoraConfig(
+    r=8, 
+    lora_alpha=32, 
+    target_modules=["q_proj", "v_proj"], 
+    lora_dropout=0.05,
+    bias="none",
+    task_type="SEQ_2_SEQ_LM"
+)
+
+# The resulting model drastically reduces computational overhead,
+# allowing real-time inference on resource-constrained devices.
+edge_optimized_model = get_peft_model(base_model, lora_config)
+edge_optimized_model.eval()`,
+        s2Label: '02 / EDGE_DEPLOYMENT_&_EVALUATION',
+        s2Body: 'To enable deployment on resource-constrained edge devices, Low-Rank Adaptation (LoRA) was applied to the underlying model, drastically reducing computational requirements without sacrificing quality. The optimized pipeline was subjected to comprehensive evaluations, demonstrating highly competitive translation quality via standard metrics like BLEU and chrF++ across Indian language pairs.',
+        s3Label: null, s3Body: null,
+        tags: ['IndicTrans2', 'LoRA', 'Edge AI', 'NLP', 'PyTorch'],
+        year: '2024', extra: '<a href="https://link.springer.com/chapter/10.1007/978-981-95-5835-3_5" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors underline underline-offset-4">VIEW PUBLICATION ↗</a>',
+        smallDiagram: true
     }
 };
 
@@ -141,17 +309,47 @@ function togglePanel(id) {
 
         document.getElementById('panel-meta-id').innerHTML =
             `<span class="inline-block w-3 h-3" style="background:var(--accent-color)"></span> ${data.meta}`;
-        document.getElementById('panel-category').textContent = data.cat;
+        const catElem = document.getElementById('panel-category');
+        if (data.cat) {
+            catElem.textContent = data.cat;
+            catElem.style.display = 'block';
+        } else {
+            catElem.style.display = 'none';
+        }
         document.getElementById('panel-title').textContent = data.title;
 
         document.getElementById('panel-s1-label').innerHTML =
             `<span class="inline-block w-10 h-0.5" style="background:var(--accent-color)"></span> ${data.s1Label}`;
         document.getElementById('panel-s1-body').textContent = data.s1Body;
 
+        const mermaidBlock = document.getElementById('panel-mermaid-block');
+        if (data.mermaid && mermaidBlock) {
+            const mermaidElem = document.getElementById('panel-mermaid');
+            if (data.smallDiagram) {
+                mermaidElem.classList.add('w-full', 'max-w-3xl', 'mx-auto');
+            } else {
+                mermaidElem.classList.remove('w-full', 'max-w-3xl', 'mx-auto');
+            }
+            mermaidElem.removeAttribute('data-processed');
+            mermaidElem.textContent = data.mermaid;
+            mermaidBlock.style.display = 'block';
+            if (window.mermaid) {
+                mermaid.run({
+                    nodes: [mermaidElem]
+                }).catch(e => console.error("Mermaid parsing error:", e));
+            }
+        } else if (mermaidBlock) {
+            mermaidBlock.style.display = 'none';
+        }
+
         const codeBlock = document.getElementById('panel-code-block');
         if (data.code) {
-            document.getElementById('panel-code').textContent = data.code;
+            const codeElem = document.getElementById('panel-code');
+            codeElem.textContent = data.code;
             codeBlock.style.display = 'block';
+            if (window.Prism) {
+                Prism.highlightElement(codeElem);
+            }
         } else {
             codeBlock.style.display = 'none';
         }
@@ -181,7 +379,7 @@ function togglePanel(id) {
         const extra = document.getElementById('panel-extra');
         if (data.extra) {
             extraLabel.textContent = data.type === 'blog' ? 'READ TIME' : 'STATUS';
-            extra.textContent = data.extra;
+            extra.innerHTML = data.extra;
             extraRow.classList.add('visible');
         } else {
             extraRow.classList.remove('visible');
@@ -196,6 +394,50 @@ function togglePanel(id) {
     }
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') togglePanel(); });
+
+// ── Mermaid Zoom ──────────────────────────────────────────────────
+function openMermaidZoom() {
+    const originalSvg = document.querySelector('#panel-mermaid svg');
+    if (!originalSvg) return;
+    
+    const svgContent = originalSvg.outerHTML;
+    const newWindow = window.open('', '_blank');
+    
+    if (!newWindow) {
+        alert("Please allow popups to view the expanded diagram.");
+        return;
+    }
+    
+    newWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Architecture Diagram</title>
+            <style>
+                body { 
+                    margin: 0; 
+                    background: #0a0a0a; 
+                    display: flex; 
+                    justify-content: center; 
+                    align-items: center; 
+                    min-height: 100vh;
+                    font-family: 'Inter', sans-serif;
+                }
+                svg { 
+                    width: 95vw; 
+                    height: 95vh;
+                    max-width: none;
+                }
+            </style>
+        </head>
+        <body>
+            ${svgContent}
+        </body>
+        </html>
+    `);
+    newWindow.document.close();
+}
 
 // ── Scroll Spy ────────────────────────────────────────────────────
 const spySections = ['about', 'experience', 'work', 'writing'];
@@ -248,19 +490,14 @@ function initWritingSection() {
     const tiles = writingTrack ? writingTrack.querySelectorAll('.writing-tile') : [];
     const threshold = 4;
 
-    if (tiles.length < threshold && writingTrack && writingSpacer && header) {
+    if (tiles.length < threshold && window.innerWidth >= 768) {
         writingSection.classList.add('writing-container-grid');
         writingSection.classList.remove('horizontal-scroll-container');
         writingSpacer.classList.add('hidden');
-        header.classList.remove('absolute', 'top-20');
-        header.style.width = '';
-        header.classList.add('mb-12', 'px-4', 'md:px-8', 'max-w-screen-2xl', 'mx-auto');
     } else if (writingTrack && writingSpacer && header) {
         writingSection.classList.remove('writing-container-grid');
         writingSection.classList.add('horizontal-scroll-container');
         writingSpacer.classList.remove('hidden');
-        header.classList.add('absolute', 'top-20');
-        header.classList.remove('mb-12', 'px-4', 'md:px-8', 'max-w-screen-2xl', 'mx-auto');
     }
 }
 

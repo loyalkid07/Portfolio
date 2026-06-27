@@ -86,8 +86,8 @@ li { margin-bottom: 1.25rem; }
     <!-- Hero Banner -->
     <div class="w-full aspect-[21/9] flex items-center justify-center border mb-16 relative overflow-hidden" style="background:var(--input-bg); border-color:var(--outline-color); border-radius: 12px;">
         <div class="absolute inset-0 opacity-10" style="background-image: repeating-linear-gradient(45deg, var(--accent-color) 0, var(--accent-color) 1px, transparent 1px, transparent 10px);"></div>
-        <div class="font-serif text-[120px] md:text-[180px] font-black tracking-tighter opacity-10 uppercase leading-none">8 HOURS</div>
-        <div class="absolute font-mono text-[10px] tracking-[0.4em] uppercase font-bold" style="color:var(--accent-color)">SYSTEM UNDER LOAD</div>
+        <div class="font-serif text-[60px] sm:text-[90px] md:text-[180px] font-black tracking-tighter opacity-10 uppercase leading-none">8 HOURS</div>
+        <div class="absolute font-mono text-[10px] tracking-[0.4em] uppercase font-bold text-center px-4" style="color:var(--accent-color)">SYSTEM UNDER LOAD</div>
     </div>
 
     <h2 class="flex items-end gap-4 md:gap-6">
@@ -117,7 +117,7 @@ li { margin-bottom: 1.25rem; }
     <p>The benchmark numbers, once I started logging them properly instead of just living through them, made the shape of the problem visible before I had a name for it:</p>
 
     <!-- Scaling chart with variance using CSS Grid -->
-    <div class="my-12 p-8 border" style="background:var(--input-bg); border-color:var(--outline-color); border-radius: 12px;">
+    <div class="my-12 p-4 md:p-8 border overflow-x-auto" style="background:var(--input-bg); border-color:var(--outline-color); border-radius: 12px;">
         <div class="font-mono text-[10px] tracking-widest uppercase font-bold mb-8 opacity-50">Variance Scaling Matrix</div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- 300 Pages -->
@@ -178,8 +178,8 @@ li { margin-bottom: 1.25rem; }
     <p><strong>CPU-bound vs. I/O-bound.</strong> Not about which library you reach for. It's about where the bottleneck physically lives. If the CPU is maxed out doing real computation, waiting doesn't help, because nothing's waiting. If the bottleneck is a socket or a disk and the CPU is idle in the gap, that idle gap is exactly what async and threads can fill — which is why threading worked fine for OCR and not for this.</p>
     <p><strong>The event loop.</strong> A single thread asking the OS, over and over, "which of the things I'm waiting on are ready?" — on Linux, backed by <code>epoll</code>. When something's ready, it resumes the coroutine waiting on it. The whole model depends on that thread never actually blocking for any real stretch of time. Block it, and the loop stops doing its one job: responding to things promptly.</p>
     
-    <div class="my-10 flex justify-center">
-        <div class="mermaid">
+    <div class="my-10 flex justify-center w-full overflow-x-auto">
+        <div class="mermaid min-w-[300px]">
             flowchart LR
                 A((Poll OS<br/>epoll)) --> B(Resume<br/>Coroutine)
                 B --> C(Run to<br/>next await)
@@ -195,8 +195,8 @@ li { margin-bottom: 1.25rem; }
     <p>That's where it forks into two failure paths, both coming from the same root:</p>
 
     <!-- The Cascade Flowchart -->
-    <div class="my-12 p-8 border overflow-x-auto bg-[#1a1a1a]" style="border-color:var(--outline-color); border-radius: 12px;">
-        <div class="mermaid">
+    <div class="my-12 p-4 md:p-8 border overflow-x-auto bg-[#1a1a1a]" style="border-color:var(--outline-color); border-radius: 12px;">
+        <div class="mermaid min-w-[600px]">
             flowchart TD
                 subgraph Contention
                     Root["ThreadPoolExecutor Preprocessing<br/>(CPU-bound image work)"] --> Thrashing["Threads contend for the GIL<br/>CPU thrashing, not parallelism"]
@@ -275,9 +275,9 @@ def preprocess_page(page_image) -> str:
     <p>Second: <code>cv2.setNumThreads(0)</code>, inside each worker. Without it, OpenCV spins up its own internal thread pool inside every process, fanning out across all visible CPUs again — the same oversubscription bug one layer down, at the native-library level instead of the Python-process level. Same mistake, different floor of the building.</p>
 
     <!-- Before/After Architecture -->
-    <div class="my-12 p-8 border bg-[#1a1a1a]" style="border-color:var(--outline-color); border-radius: 12px;">
+    <div class="my-12 p-4 md:p-8 border overflow-x-auto bg-[#1a1a1a]" style="border-color:var(--outline-color); border-radius: 12px;">
         <div class="font-mono text-[10px] tracking-widest uppercase font-bold mb-4 opacity-50">Architecture: Before vs After</div>
-        <div class="mermaid">
+        <div class="mermaid min-w-[700px]">
             flowchart LR
                 subgraph BEFORE ["BEFORE: ThreadPoolExecutor"]
                     direction TB
@@ -328,8 +328,8 @@ def preprocess_page(page_image) -> str:
     <p>The detail that mattered for this specific fix: calling <code>loop.run_in_executor(None, fn, *args)</code> tells asyncio to use its default executor — a <code>ThreadPoolExecutor</code> the loop owns internally. That's exactly why my original instinct felt so natural; it's the path of least resistance asyncio hands you by default. But you're not stuck with the default. Passing an explicit executor — <code>loop.run_in_executor(global_process_pool, fn, *args)</code> — tells the loop to submit there instead. That one argument is the whole mechanism behind this fix: the loop's offloading machinery doesn't care if the executor is threads or processes, because either way it's just awaiting a future. It's not a different API. It's the same bridge, pointed somewhere else.</p>
 
     <!-- Sequence Diagram -->
-    <div class="my-12 p-8 border bg-[#1a1a1a]" style="border-color:var(--outline-color); border-radius: 12px;">
-        <div class="mermaid">
+    <div class="my-12 p-4 md:p-8 border overflow-x-auto bg-[#1a1a1a]" style="border-color:var(--outline-color); border-radius: 12px;">
+        <div class="mermaid min-w-[500px]">
             sequenceDiagram
                 participant E as Event Loop
                 participant X as Executor
@@ -369,8 +369,8 @@ def preprocess_page(page_image) -> str:
     <p>The second is the preprocessing stage in isolation, after the fix: a 10–20 page batch went from roughly 1.5–2 minutes to under 15–20 seconds. Call it a 6x improvement, at the chunk level, specifically for preprocessing.</p>
 
     <!-- Before/After Bar Chart -->
-    <div class="my-12 p-8 border" style="background:var(--input-bg); border-color:var(--outline-color); border-radius: 12px;">
-        <div class="font-mono text-[10px] tracking-widest uppercase font-bold mb-8 opacity-50">Preprocessing Bottleneck (10-20 Page Batch)</div>
+    <div class="my-12 p-4 md:p-8 border overflow-x-auto" style="background:var(--input-bg); border-color:var(--outline-color); border-radius: 12px;">
+        <div class="font-mono text-[10px] tracking-widest uppercase font-bold mb-8 opacity-50 min-w-[300px]">Preprocessing Bottleneck (10-20 Page Batch)</div>
         <div class="flex flex-col gap-6">
             <div>
                 <div class="flex justify-between font-mono text-xs mb-2">
@@ -403,8 +403,8 @@ def preprocess_page(page_image) -> str:
     <p>A separate batching layer chunks large documents into smaller payloads — say, 20 pages each — and uses <code>asyncio.gather</code> to run workflow executions for each chunk concurrently. It's the same offloading mechanism from the section above, one level up: instead of the loop awaiting a process-pool future for one image, it's awaiting workflow-execution futures for entire chunks, each of which does its own process-pool preprocessing and asyncio OCR calls underneath. Processes crunch pixels at the bottom layer; asyncio orchestrates everything above it — workflow dispatch, OCR calls, the chunk fan-out itself. Neither layer does the other's job, which is why they compose instead of fighting each other for the same resource.</p>
 
     <!-- Layered Architecture -->
-    <div class="my-12 p-8 border bg-[#1a1a1a]" style="border-color:var(--outline-color); border-radius: 12px;">
-        <div class="mermaid">
+    <div class="my-12 p-4 md:p-8 border overflow-x-auto bg-[#1a1a1a]" style="border-color:var(--outline-color); border-radius: 12px;">
+        <div class="mermaid min-w-[500px]">
             graph TD
                 Doc[/"10,000+ Page Document"/] --> Chunk["Chunker (20-page payloads)"]
                 Chunk --> Gather{"asyncio.gather()"}

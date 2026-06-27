@@ -189,6 +189,21 @@ body {
     align-items: center;
 }
 
+@media (max-width: 767px) {
+    .nav-grid {
+        display: flex;
+        overflow-x: auto;
+        gap: 24px;
+        -webkit-overflow-scrolling: touch;
+    }
+    .nav-grid > div {
+        flex-shrink: 0;
+    }
+    .nav-grid::-webkit-scrollbar {
+        display: none;
+    }
+}
+
 /* ── Experience entries ─────────────────────────────────────────── */
 .exp-entry {
     padding: 40px;
@@ -213,7 +228,15 @@ body {
     width: 100%;
     overflow: hidden;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+}
+
+@media (max-height: 750px) {
+    .horizontal-sticky {
+        justify-content: flex-start;
+        padding-top: 100px;
+    }
 }
 
 .horizontal-track {
@@ -239,7 +262,7 @@ body {
 /* Mobile: native horizontal scroll + snap — JS transform disabled */
 @media (max-width: 767px) {
     .horizontal-scroll-container {
-        height: auto;
+        height: auto !important;
     }
 
     .horizontal-sticky {
@@ -281,6 +304,11 @@ body {
 /* ── Writing grid mode ──────────────────────────────────────────── */
 .writing-container-grid {
     height: auto !important;
+}
+@media (min-width: 768px) {
+    .writing-container-grid {
+        margin-top: calc(-50vh + 380px) !important;
+    }
 }
 
 .writing-container-grid .horizontal-sticky {

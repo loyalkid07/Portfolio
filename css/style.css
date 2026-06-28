@@ -232,10 +232,54 @@ body {
     justify-content: center;
 }
 
-@media (max-height: 750px) {
+@media (max-height: 850px) {
     .horizontal-sticky {
-        justify-content: flex-start;
-        padding-top: 100px;
+        justify-content: center;
+        padding-top: 0;
+    }
+    .horizontal-sticky .mb-16 {
+        margin-bottom: 2rem !important;
+    }
+    .project-tile,
+    .writing-tile,
+    .writing-tile-ghost {
+        min-height: 480px;
+        padding: 2.5rem !important;
+    }
+    .project-tile h2,
+    .writing-tile h2 {
+        font-size: 2.5rem !important;
+        margin-bottom: 1.25rem !important;
+    }
+    .project-tile p,
+    .writing-tile p {
+        font-size: 0.95rem !important;
+    }
+    .project-tile .mb-10,
+    .writing-tile .mb-10,
+    .writing-tile-ghost .mb-10 {
+        margin-bottom: 1.5rem !important;
+    }
+    .project-tile .mt-10,
+    .writing-tile .mt-10 {
+        margin-top: 1.5rem !important;
+    }
+}
+
+@media (max-height: 650px) {
+    .project-tile,
+    .writing-tile,
+    .writing-tile-ghost {
+        min-height: 420px;
+        padding: 1.5rem !important;
+    }
+    .project-tile h2,
+    .writing-tile h2 {
+        font-size: 2rem !important;
+    }
+    .project-tile p,
+    .writing-tile p {
+        font-size: 0.85rem !important;
     }
 }
 
@@ -250,7 +294,8 @@ body {
 .project-tile,
 .writing-tile {
     flex: 0 0 580px;
-    height: 560px;
+    min-height: 560px;
+    height: auto;
 }
 
 .writing-tile-ghost {

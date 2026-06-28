@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>{{BLOG_TITLE}} — Shreyas Patil</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: { "accent": "#ff5c00" },
+                fontFamily: {
+                    "serif": ["Space Grotesk", "sans-serif"],
+                    "sans": ["Inter", "sans-serif"],
+                    "mono": ["JetBrains Mono", "monospace"]
+                }
+            }
+        }
+    }
+</script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+<style>
+    code[class*="language-"] {
+        background: transparent !important;
+        text-shadow: none !important;
+        box-shadow: none !important;
+    }
+</style>
+<link rel="stylesheet" href="../css/style.css">
+<!-- Mermaid for diagrams -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ 
+      startOnLoad: true, 
+      theme: 'dark', 
+      themeVariables: {
+          primaryColor: '#1a1a1a',
+          primaryTextColor: '#fff',
+          primaryBorderColor: '#333',
+          lineColor: '#555',
+          secondaryColor: '#2a2a2a',
+          tertiaryColor: '#111',
+          fontFamily: 'JetBrains Mono',
+      } 
+  });
+</script>
+<style>
+/* Custom Code Block Styling */
+pre { background: var(--input-bg) !important; border: 1px solid var(--outline-color) !important; border-radius: 8px !important; padding: 1.5rem !important; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #e5e5e5; margin-bottom: 2.5rem !important; display: block; }
+code { font-family: 'JetBrains Mono', monospace; }
+h2 { display: block; clear: both; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.2em; font-weight: 700; opacity: 0.5; margin-top: 3.5rem !important; margin-bottom: 1.5rem !important; text-transform: uppercase; }
+h3 { display: block; clear: both; font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 700; color: var(--accent-color); margin-top: 2.5rem !important; margin-bottom: 1rem !important; }
+p, ul, li { margin-bottom: 1.25rem; font-family: 'Inter', sans-serif; font-size: 1.125rem; line-height: 1.75; opacity: 0.85; }
+.blog-content strong { color: var(--text-color); font-weight: 600; }
+.blog-content img { border: 1px solid var(--outline-color); border-radius: 12px; margin-bottom: 2.5rem !important; width: 100%; height: auto; display: block; }
+.mermaid { display: block; width: 100%; overflow-x: auto; }
+</style>
+</head>
+<body class="antialiased selection:bg-accent selection:text-white">
+
+<div class="fixed inset-0 pointer-events-none brutalist-grid z-0"></div>
+
+<!-- NAV -->
+<nav class="fixed top-0 left-0 w-full z-50 px-4 md:px-8 h-20 backdrop-blur-xl border-b" style="background-color:var(--nav-bg); border-color:var(--outline-color);">
+    <div class="h-full w-full flex justify-between items-center max-w-screen-2xl mx-auto">
+        <a href="../index.html#writing" class="font-mono text-[10px] tracking-widest uppercase font-black opacity-50 hover:opacity-100 hover:text-accent transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+            PORTFOLIO
+        </a>
+        <div class="flex items-center gap-3 md:gap-4">
+            <div class="status-indicator hidden sm:flex" id="status-indicator">
+                <span class="status-dot open" id="status-dot"></span>
+                <span id="status-label">OPEN TO ROLES</span>
+            </div>
+            <button aria-label="Toggle Theme" class="p-2 transition-all hover:text-accent flex items-center" onclick="toggleTheme()">
+                <span class="material-symbols-outlined text-[20px] dark:hidden">dark_mode</span>
+                <span class="material-symbols-outlined text-[20px] hidden dark:block">light_mode</span>
+            </button>
+            <a class="text-white px-4 md:px-6 py-2.5 font-mono text-[9px] md:text-[10px] font-black uppercase tracking-[0.18em] hover:brightness-110 transition-all active:scale-95" style="background:var(--accent-color); border-radius:10px;" href="../index.html#find-me">REACH_OUT</a>
+        </div>
+    </div>
+</nav>
+
+<main class="relative z-10 pt-40 px-4 md:px-8 max-w-screen-md mx-auto pb-32 blog-content">
+    <div class="font-mono text-[11px] tracking-[0.2em] font-bold opacity-35 mb-6" style="color:var(--accent-color)">{{BLOG_DATE}} // {{BLOG_ID}}</div>
+    <h1 class="font-serif text-4xl md:text-6xl font-bold mb-6 tracking-tighter uppercase leading-[1.2]" style="color:var(--text-color);">{{BLOG_TITLE}}</h1>
+    <p class="font-mono text-sm opacity-50 mb-16 italic" style="color:var(--accent-color)">{{BLOG_SUBTITLE}}</p>
+    
+    <!-- Hero Banner -->
+    <div class="w-full aspect-[21/9] flex items-center justify-center border mb-16 relative overflow-hidden" style="background:var(--input-bg); border-color:var(--outline-color); border-radius: 12px;">
+        <div class="absolute inset-0 opacity-10" style="background-image: repeating-linear-gradient(45deg, var(--accent-color) 0, var(--accent-color) 1px, transparent 1px, transparent 10px);"></div>
+        <div class="font-serif text-6xl sm:text-8xl md:text-[100px] font-black tracking-tighter opacity-10 uppercase leading-[0.9] text-center px-4 w-full break-words" style="word-break: break-word; color:var(--text-color);">{{HERO_TEXT_BIG}}</div>
+        <div class="absolute font-mono text-[10px] tracking-[0.4em] uppercase font-bold text-center px-4" style="color:var(--accent-color)">{{HERO_TEXT_SMALL}}</div>
+    </div>
+
+    {{BLOG_CONTENT}}
+    
+</main>
+
+<script src="../js/main.js" defer></script>
+<script>
+    // Theme toggle specific to blog page (overrides main.js if needed to keep dark mode baseline)
+    document.addEventListener('DOMContentLoaded', () => {
+        // Force dark mode to look sleek for blog posts unless specifically toggled
+        if (!localStorage.getItem('theme')) {
+            document.documentElement.classList.add('dark');
+        }
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+</body>
+</html>

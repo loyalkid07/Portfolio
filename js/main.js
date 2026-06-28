@@ -10,7 +10,7 @@ const AVAILABILITY_STATUS = 'open';
     if (!dot || !label) return;
     if (AVAILABILITY_STATUS === 'open') {
         dot.className = 'status-dot open';
-        label.textContent = 'OPEN';
+        label.textContent = 'OPEN TO ROLES';
     } else {
         dot.className = 'status-dot busy';
         label.textContent = 'BUILDING';
@@ -396,8 +396,14 @@ function togglePanel(id) {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') togglePanel(); });
 
 // ── Mermaid Zoom ──────────────────────────────────────────────────
-function openMermaidZoom() {
-    const originalSvg = document.querySelector('#panel-mermaid svg');
+function openMermaidZoom(btn) {
+    let originalSvg = null;
+    if (btn && btn.closest) {
+        const container = btn.closest('.mermaid-container, #panel-mermaid-block, .relative');
+        if (container) originalSvg = container.querySelector('svg');
+    }
+    if (!originalSvg) originalSvg = document.querySelector('#panel-mermaid svg');
+    
     if (!originalSvg) return;
     
     const svgContent = originalSvg.outerHTML;

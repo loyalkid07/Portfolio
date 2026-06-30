@@ -91,11 +91,7 @@ p, ul, li { margin-bottom: 1.25rem; font-family: 'Inter', sans-serif; font-size:
     <p class="font-mono text-sm opacity-50 mb-16 italic" style="color:var(--accent-color)">{{BLOG_SUBTITLE}}</p>
     
     <!-- Hero Banner -->
-    <div class="w-full aspect-[21/9] flex items-center justify-center border mb-16 relative overflow-hidden" style="background:var(--input-bg); border-color:var(--outline-color); border-radius: 12px;">
-        <div class="absolute inset-0 opacity-10" style="background-image: repeating-linear-gradient(45deg, var(--accent-color) 0, var(--accent-color) 1px, transparent 1px, transparent 10px);"></div>
-        <div class="font-serif text-6xl sm:text-8xl md:text-[100px] font-black tracking-tighter opacity-10 uppercase leading-[0.9] text-center px-4 w-full break-words" style="word-break: break-word; color:var(--text-color);">{{HERO_TEXT_BIG}}</div>
-        <div class="absolute font-mono text-[10px] tracking-[0.4em] uppercase font-bold text-center px-4" style="color:var(--accent-color)">{{HERO_TEXT_SMALL}}</div>
-    </div>
+    {{HERO_SECTION}}
 
     {{BLOG_CONTENT}}
     

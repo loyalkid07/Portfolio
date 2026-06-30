@@ -86,8 +86,38 @@ def main():
     
     md_body = re.sub(r'```mermaid\n(.*?)\n```', repl_mermaid, md_body, flags=re.DOTALL)
     
+    # Pre-process Obsidian Images ![[image.png]]
+    import shutil
+    def repl_obsidian_img(m):
+        img_name = m.group(1).strip()
+        src = os.path.join(r"D:\Dev\Shrey's Vault", img_name)
+        dst = os.path.join(script_dir, '..', 'assets', img_name)
+        if os.path.exists(src) and not os.path.exists(dst):
+            try:
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+                shutil.copy2(src, dst)
+                print(f"Auto-copied {img_name} from Obsidian vault to assets directory.")
+            except Exception as e:
+                print(f"Warning: Could not copy {img_name}: {e}")
+        return f'<img src="../assets/{img_name}" alt="{img_name}">'
+        
+    md_body = re.sub(r'!\[\[(.*?)\]\]', repl_obsidian_img, md_body)
+
     # Convert to HTML
     html_content = markdown.markdown(md_body, extensions=['fenced_code', 'tables'])
+    
+    # Post-process HTML for custom styles
+    
+    # 1. Blockquotes -> <div class="beat">
+    html_content = html_content.replace('<blockquote>', '<div class="beat">').replace('</blockquote>', '</div>')
+    
+    # 2. Numbered Headers -> <h2 class="...">
+    def repl_h2(m):
+        num = m.group(1).strip()
+        title = m.group(2).strip()
+        return f'<h2 class="flex items-end gap-4 md:gap-6"><span class="text-5xl md:text-6xl font-black leading-none opacity-50" style="color:var(--accent-color)">{num}</span><span class="pb-2">{title}</span></h2>'
+        
+    html_content = re.sub(r'<h2>(\d+)\s*--\s*(.*?)</h2>', repl_h2, html_content)
     
     # Read Template
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -96,12 +126,24 @@ def main():
         template = f.read()
         
     # Inject variables
+    # Handle Hero Section
+    hero_img = fm.get('hero_image')
+    if hero_img:
+        hero_section = f'<div class="w-full mb-16"><img src="{hero_img}" class="w-full h-auto rounded-xl border" style="border-color:var(--outline-color);" alt="Hero"></div>'
+    else:
+        hero_text_big = fm.get('hero_text_big', 'BLOG')
+        hero_text_small = fm.get('hero_text_small', 'READING')
+        hero_section = f'''<div class="w-full aspect-[21/9] flex items-center justify-center border mb-16 relative overflow-hidden" style="background:var(--input-bg); border-color:var(--outline-color); border-radius: 12px;">
+        <div class="absolute inset-0 opacity-10" style="background-image: repeating-linear-gradient(45deg, var(--accent-color) 0, var(--accent-color) 1px, transparent 1px, transparent 10px);"></div>
+        <div class="font-serif text-6xl sm:text-8xl md:text-[100px] font-black tracking-tighter opacity-10 uppercase leading-[0.9] text-center px-4 w-full break-words" style="word-break: break-word; color:var(--text-color);">{hero_text_big}</div>
+        <div class="absolute font-mono text-[10px] tracking-[0.4em] uppercase font-bold text-center px-4" style="color:var(--accent-color)">{hero_text_small}</div>
+    </div>'''
+
     template = template.replace('{{BLOG_TITLE}}', fm.get('title', 'Untitled'))
     template = template.replace('{{BLOG_SUBTITLE}}', fm.get('subtitle', ''))
     template = template.replace('{{BLOG_DATE}}', fm.get('date', 'DATE'))
     template = template.replace('{{BLOG_ID}}', fm.get('id', 'BLOG_X'))
-    template = template.replace('{{HERO_TEXT_BIG}}', fm.get('hero_text_big', 'BLOG'))
-    template = template.replace('{{HERO_TEXT_SMALL}}', fm.get('hero_text_small', 'READING'))
+    template = template.replace('{{HERO_SECTION}}', hero_section)
     template = template.replace('{{BLOG_CONTENT}}', html_content)
     
     # Save the generated HTML
